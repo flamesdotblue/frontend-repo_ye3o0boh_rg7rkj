@@ -1,17 +1,41 @@
 import React from 'react';
-import Spline from '@splinetool/react-spline';
 import { ChevronRight, Star } from 'lucide-react';
 
+// Safe Spline loader: avoids breaking the app if the package or scene fails to load
 const HeroSection = () => {
+  const [SplineComp, setSplineComp] = React.useState(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    // Dynamically import Spline so the app still renders even if it fails
+    import('@splinetool/react-spline')
+      .then((mod) => {
+        if (mounted) setSplineComp(() => mod.default);
+      })
+      .catch(() => {
+        // If Spline fails to load (network/package), we gracefully skip it
+        if (mounted) setSplineComp(null);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
-        <Spline
-          scene="https://prod.spline.design/Rz9rYQ0Q8zV7Qy8g/scene.splinecode"
-          style={{ width: '100%', height: '100%' }}
-        />
+        {SplineComp ? (
+          <SplineComp
+            scene="https://prod.spline.design/Rz9rYQ0Q8zV7Qy8g/scene.splinecode"
+            style={{ width: '100%', height: '100%' }}
+          />
+        ) : (
+          // Fallback decorative gradient if Spline isn't available
+          <div className="w-full h-full bg-gradient-to-tr from-purple-200 via-pink-200 to-indigo-200" />
+        )}
       </div>
 
+      {/* Non-blocking overlay for readability over the 3D scene */}
       <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/70 to-white pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
